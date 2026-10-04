@@ -1,12 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
+const DEFAULT_SUPABASE_URL = "https://qmummabspnyylopokaoh.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_gLUnTuj2wCb5YiEuDUgraA_TyQqwsKY";
+
 // Default / fallback keys from env or localStorage
 export const getSupabaseConfig = () => {
   const storedUrl = localStorage.getItem('jimmy_supabase_url');
   const storedKey = localStorage.getItem('jimmy_supabase_key');
 
-  const url = storedUrl || import.meta.env.VITE_SUPABASE_URL || '';
-  const key = storedKey || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  const url = storedUrl || import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const key = storedKey || import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
   return { url, key, isConfigured: Boolean(url && key) };
 };
@@ -36,7 +39,7 @@ export const getSupabaseClient = () => {
 /**
  * Image compressor & uploader
  * Uploads to Supabase Storage bucket 'product-images'
- * If Supabase is not configured, uploads to ImgBB CDN free API as fallback
+ * If Supabase is not configured or fails, uploads to ImgBB CDN free API as fallback
  */
 export const uploadImageToCloud = async (file) => {
   if (!file) throw new Error('لا يوجد ملف مختار');
@@ -48,7 +51,7 @@ export const uploadImageToCloud = async (file) => {
 
   if (supabase) {
     try {
-      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileExt = file.name ? file.name.split('.').pop() : 'jpg';
       const fileName = `shoes_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
       const filePath = `products/${fileName}`;
 
@@ -59,14 +62,16 @@ export const uploadImageToCloud = async (file) => {
           upsert: true
         });
 
-      if (error) throw error;
+      if (!error && data) {
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath);
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(filePath);
-
-      return urlData.publicUrl;
+        if (urlData?.publicUrl) {
+          return urlData.publicUrl;
+        }
+      }
     } catch (sbError) {
       console.warn('Supabase storage upload failed, attempting fallback CDN...', sbError);
     }
@@ -77,7 +82,6 @@ export const uploadImageToCloud = async (file) => {
     const formData = new FormData();
     formData.append('image', compressedFile);
 
-    // Free public anonymous upload key
     const response = await fetch('https://api.imgbb.com/1/upload?key=8cf6226cb6b38c2cb57bf9e346f047ff', {
       method: 'POST',
       body: formData,
