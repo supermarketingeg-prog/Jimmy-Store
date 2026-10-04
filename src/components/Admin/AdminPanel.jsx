@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
+import { getSupabaseConfig, saveSupabaseConfig } from '../../lib/supabase';
 import {
   X, Plus, Edit, Trash2, Save, Image, Tag, DollarSign, Package,
   Sliders, Bell, Settings, Lock, Eye, Check, AlertCircle, Download,
-  Upload, RefreshCw, Layers, Phone, ShieldCheck, ShoppingCart
+  Upload, RefreshCw, Layers, Phone, ShieldCheck, ShoppingCart, Cloud, Database,
+  Copy, ExternalLink, Loader2
 } from 'lucide-react';
 
 export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) => {
@@ -12,6 +14,8 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
     banner,
     settings,
     orders,
+    cloudStatus,
+    isCloudSyncing,
     isAdminLoggedIn,
     adminLogin,
     adminLogout,
@@ -21,12 +25,15 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
     toggleProductStock,
     updateBanner,
     updateSettings,
+    connectSupabase,
+    uploadImageToCloud,
     exportBackupJSON,
     importBackupJSON,
-    resetToDefault
+    resetToDefault,
+    fetchCloudData
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'banner' | 'settings' | 'orders'
+  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'banner' | 'orders' | 'settings' | 'cloud'
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
 
@@ -52,14 +59,26 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
   // Settings Form State
   const [settingsForm, setSettingsForm] = useState(settings);
 
-  // Success Notification state
+  // Cloud Credentials state
+  const [supabaseUrl, setSupabaseUrl] = useState('');
+  const [supabaseKey, setSupabaseKey] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+
+  // Notification state
   const [saveSuccess, setSaveSuccess] = useState('');
+
+  useEffect(() => {
+    const cfg = getSupabaseConfig();
+    setSupabaseUrl(cfg.url);
+    setSupabaseKey(cfg.key);
+  }, []);
 
   if (!isOpen) return null;
 
   const triggerSuccess = (msg) => {
     setSaveSuccess(msg);
-    setTimeout(() => setSaveSuccess(''), 3000);
+    setTimeout(() => setSaveSuccess(''), 3500);
   };
 
   // Handle Login
@@ -74,7 +93,7 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
     }
   };
 
-  // Handle open add product
+  // Open add product
   const handleOpenAdd = () => {
     setEditingId(null);
     setProductForm({
@@ -92,7 +111,7 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
     setIsProductModalOpen(true);
   };
 
-  // Handle open edit product
+  // Open edit product
   const handleOpenEdit = (p) => {
     setEditingId(p.id);
     setProductForm({
@@ -104,7 +123,7 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
   };
 
   // Save Product
-  const handleSaveProduct = (e) => {
+  const handleSaveProduct = async (e) => {
     e.preventDefault();
     if (!productForm.name || !productForm.price) {
       alert('من فضلك ادخل اسم المنتج وسعره');
@@ -112,50 +131,67 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
     }
 
     if (editingId) {
-      updateProduct(editingId, productForm);
-      triggerSuccess('تم تعديل بيانات وسعر المنتج بنجاح! ✅');
+      await updateProduct(editingId, productForm);
+      triggerSuccess('تم تعديل بيانات وسعر المنتج سحابياً بنجاح! ☁️✅');
     } else {
-      addProduct(productForm);
-      triggerSuccess('تمت إضافة المنتج الجديد بنجاح! 🎉');
+      await addProduct(productForm);
+      triggerSuccess('تمت إضافة المنتج الجديد سحابياً بنجاح! 🎉');
     }
     setIsProductModalOpen(false);
   };
 
   // Save Banner
-  const handleSaveBanner = (e) => {
+  const handleSaveBanner = async (e) => {
     e.preventDefault();
-    updateBanner(bannerForm);
-    triggerSuccess('تم حفظ تعديلات البانر بنجاح! ✅');
+    await updateBanner(bannerForm);
+    triggerSuccess('تم حفظ تعديلات البانر سحابياً بنجاح! ☁️✅');
   };
 
   // Save Settings
-  const handleSaveSettings = (e) => {
+  const handleSaveSettings = async (e) => {
     e.preventDefault();
-    updateSettings(settingsForm);
-    triggerSuccess('تم حفظ إعدادات المتجر بنجاح! ✅');
+    await updateSettings(settingsForm);
+    triggerSuccess('تم حفظ إعدادات المتجر سحابياً بنجاح! ☁️✅');
   };
 
-  // Handle image upload / paste conversion to DataURL
-  const handleFileUpload = (e) => {
+  // Connect Supabase Cloud
+  const handleSaveCloudConfig = async (e) => {
+    e.preventDefault();
+    await connectSupabase(supabaseUrl, supabaseKey);
+    triggerSuccess('تم حفظ بيانات الربط السحابي ومزامنة قاعدة البيانات! 🟢');
+  };
+
+  // Upload Product Image to Cloud
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProductForm(prev => ({ ...prev, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
+      setIsUploadingImage(true);
+      try {
+        const cloudUrl = await uploadImageToCloud(file);
+        setProductForm(prev => ({ ...prev, image: cloudUrl }));
+        triggerSuccess('تم رفع وضغط الصورة سحابياً بنجاح! 🚀');
+      } catch (err) {
+        alert('تعذر رفع الصورة: ' + err.message);
+      } finally {
+        setIsUploadingImage(false);
+      }
     }
   };
 
-  // Handle Banner Image upload
-  const handleBannerFileUpload = (e) => {
+  // Upload Banner Image to Cloud
+  const handleBannerFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBannerForm(prev => ({ ...prev, imageUrl: reader.result }));
-      };
-      reader.readAsDataURL(file);
+      setIsUploadingBanner(true);
+      try {
+        const cloudUrl = await uploadImageToCloud(file);
+        setBannerForm(prev => ({ ...prev, imageUrl: cloudUrl }));
+        triggerSuccess('تم رفع صورة البانر سحابياً بنجاح! 🚀');
+      } catch (err) {
+        alert('تعذر رفع الصورة: ' + err.message);
+      } finally {
+        setIsUploadingBanner(false);
+      }
     }
   };
 
@@ -242,20 +278,36 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
               <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                <span>لوحة تحكم المتجر</span>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
-                  متصل ومباشر
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-white">
+                  لوحة تحكم المتجر
+                </h2>
+                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1 ${
+                  cloudStatus.connected
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                }`}>
+                  <Cloud className="w-3 h-3" />
+                  <span>{cloudStatus.connected ? 'متصل بالسحابة' : 'سحابة الصور نشطة'}</span>
                 </span>
-              </h2>
-              <p className="text-[11px] text-gray-400">
-                تعديل فوري للأسعار، الصور، المنتجات، والبانرات
+              </div>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                تعديل فوري للأسعار، رفع الصور السحابي، والتحكم بالمتجر
               </p>
             </div>
           </div>
 
           {/* Quick Actions */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={fetchCloudData}
+              disabled={isCloudSyncing}
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5 transition-all"
+              title="تحديث البيانات من السحابة"
+            >
+              <RefreshCw className={`w-4 h-4 ${isCloudSyncing ? 'animate-spin text-orange-400' : ''}`} />
+            </button>
+
             <button
               onClick={exportBackupJSON}
               className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold border border-white/5"
@@ -321,6 +373,18 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
           </button>
 
           <button
+            onClick={() => setActiveTab('cloud')}
+            className={`py-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'cloud'
+                ? 'border-orange-500 text-orange-400'
+                : 'border-transparent text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <Database className="w-4 h-4 text-emerald-400" />
+            <span>قاعدة البيانات السحابية (Supabase)</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('settings')}
             className={`py-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'settings'
@@ -342,7 +406,7 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
               
               <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
                 <div className="text-xs text-gray-400">
-                  انقر على زر <strong className="text-orange-400">"تعديل"</strong> لتغيير السعر أو الصورة أو المقاسات، أو أضف كوتشي جديد.
+                  انقر على زر <strong className="text-orange-400">"تعديل"</strong> لتغيير السعر أو رفع صورة جديدة من جهازك مباشرة.
                 </div>
                 <button
                   onClick={handleOpenAdd}
@@ -503,9 +567,9 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
                       dir="ltr"
                     />
                     <label className="cursor-pointer px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs text-white font-bold flex items-center gap-1.5 shrink-0">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>رفع صورة</span>
-                      <input type="file" accept="image/*" onChange={handleBannerFileUpload} className="hidden" />
+                      {isUploadingBanner ? <Loader2 className="w-3.5 h-3.5 animate-spin text-orange-400" /> : <Upload className="w-3.5 h-3.5" />}
+                      <span>{isUploadingBanner ? 'جاري الرفع...' : 'رفع صورة'}</span>
+                      <input type="file" accept="image/*" onChange={handleBannerFileUpload} className="hidden" disabled={isUploadingBanner} />
                     </label>
                   </div>
                 </div>
@@ -596,7 +660,7 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
                         <div className="flex items-center gap-2">
                           <span className="font-black text-orange-400">#{ord.id}</span>
                           <span className="text-gray-400 font-mono">
-                            {new Date(ord.createdAt).toLocaleString('ar-EG')}
+                            {new Date(ord.created_at || ord.createdAt).toLocaleString('ar-EG')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -645,7 +709,88 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
             </div>
           )}
 
-          {/* ---------------- TAB 4: SETTINGS ---------------- */}
+          {/* ---------------- TAB 4: SUPABASE CLOUD SYNC ---------------- */}
+          {activeTab === 'cloud' && (
+            <div className="max-w-2xl mx-auto space-y-5">
+              
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <Cloud className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">الربط السحابي مع Supabase (مجاني 100%)</h3>
+                    <p className="text-xs text-gray-300 mt-0.5">
+                      يسمح لك بحفظ كافة الأسعار والصور على سيرفر سحابي لتظهر لجميع الزوار في العالم فورياً.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-300 bg-black/40 p-3 rounded-xl border border-white/5 space-y-2">
+                  <div className="font-bold text-emerald-400">⚡ خطوات الربط في دقيقتين:</div>
+                  <ol className="list-decimal list-inside space-y-1 text-gray-300">
+                    <li>ادخل على موقع <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-orange-400 underline font-bold">Supabase.com</a> وأنشئ مشروع جديد مجاني.</li>
+                    <li>اذهب إلى <strong>Project Settings &rarr; API</strong> وانسخ <code>Project URL</code> و <code>anon public key</code>.</li>
+                    <li>اذهب إلى <strong>SQL Editor</strong> في سوبابيز والصق محتوى ملف <code>supabase_schema.sql</code> واضغط Run.</li>
+                  </ol>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveCloudConfig} className="bg-white/5 rounded-2xl p-5 border border-white/10 space-y-4">
+                <h4 className="text-xs font-bold text-white">بيانات الاتصال بالسحابة:</h4>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 mb-1">
+                    Supabase Project URL
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://xxxxxxxxxxxx.supabase.co"
+                    value={supabaseUrl}
+                    onChange={(e) => setSupabaseUrl(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 text-left font-mono"
+                    dir="ltr"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 mb-1">
+                    Supabase Anon API Key
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    value={supabaseKey}
+                    onChange={(e) => setSupabaseKey(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 text-left font-mono resize-none"
+                    dir="ltr"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-1.5"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>حفظ وتفعيل الاتصال السحابي</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={fetchCloudData}
+                    className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>فحص الاتصال</span>
+                  </button>
+                </div>
+              </form>
+
+            </div>
+          )}
+
+          {/* ---------------- TAB 5: SETTINGS ---------------- */}
           {activeTab === 'settings' && (
             <form onSubmit={handleSaveSettings} className="max-w-2xl mx-auto space-y-5">
               
@@ -856,28 +1001,30 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
 
               <div>
                 <label className="block font-bold text-gray-300 mb-1">
-                  صورة الكوتشي (رابط URL أو رفع صورة من جهازك) *
+                  صورة الكوتشي (رفع صورة سحابية من الموبايل أو الكمبيوتر) *
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     required
-                    placeholder="https://images.unsplash.com/..."
+                    placeholder="https://..."
                     value={productForm.image}
                     onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
                     className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-orange-500 text-left"
                     dir="ltr"
                   />
-                  <label className="cursor-pointer px-3 py-2 rounded-xl bg-orange-500/20 hover:bg-orange-500 text-orange-400 hover:text-white font-bold flex items-center gap-1.5 shrink-0 transition-colors">
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>رفع صورة</span>
-                    <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                  <label className={`cursor-pointer px-3.5 py-2 rounded-xl text-white font-bold flex items-center gap-1.5 shrink-0 transition-colors ${
+                    isUploadingImage ? 'bg-gray-700 cursor-not-allowed' : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 shadow-md'
+                  }`}>
+                    {isUploadingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    <span>{isUploadingImage ? 'جاري الرفع سحابياً...' : 'رفع من جهازك'}</span>
+                    <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" disabled={isUploadingImage} />
                   </label>
                 </div>
                 {productForm.image && (
                   <div className="mt-2 flex items-center gap-3">
-                    <img src={productForm.image} alt="Preview" className="w-12 h-12 rounded-lg object-cover border border-white/10" />
-                    <span className="text-[10px] text-emerald-400">تم اختيار الصورة بنجاح ✅</span>
+                    <img src={productForm.image} alt="Preview" className="w-12 h-12 rounded-lg object-cover border border-white/10 bg-zinc-900" />
+                    <span className="text-[10px] text-emerald-400">الصورة جاهزة ومحفوظة سحابياً بنجاح ✅</span>
                   </div>
                 )}
               </div>
@@ -937,10 +1084,11 @@ export const AdminPanel = ({ isOpen, onClose, initialEditingProduct = null }) =>
               <div className="pt-3 flex gap-2">
                 <button
                   type="submit"
+                  disabled={isUploadingImage}
                   className="flex-1 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white font-bold text-xs shadow-lg shadow-orange-500/25 flex items-center justify-center gap-1.5"
                 >
                   <Save className="w-4 h-4" />
-                  <span>{editingId ? 'حفظ التعديلات' : 'إضافة الكوتشي للمتجر'}</span>
+                  <span>{editingId ? 'حفظ التعديلات سحابياً' : 'إضافة الكوتشي للمتجر'}</span>
                 </button>
                 <button
                   type="button"
