@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
-import { ShoppingBag, Eye, Phone, Edit, Check, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Eye, Phone, Edit, Check, MessageCircle } from 'lucide-react';
 
 export const ProductCard = ({ product, onQuickView, onEditProduct }) => {
   const { addToCart, settings, isAdminLoggedIn } = useStore();
@@ -19,29 +19,32 @@ export const ProductCard = ({ product, onQuickView, onEditProduct }) => {
     setTimeout(() => setAddedAnimation(false), 1500);
   };
 
-  const generateWhatsAppUrl = (e) => {
+  // Orders WhatsApp Number: +201119946924
+  const ordersNumber = settings.whatsappOrdersNumber || "201119946924";
+
+  const generateWhatsAppOrderUrl = (e) => {
     e.stopPropagation();
-    const msg = `السلام عليكم، عايز أطلب كوتشي:
-👟 الموديل: ${product.name}
-📏 المقاس: ${selectedSize}
-💰 السعر: ${product.price} جنيه مصري
-🖼️ رابط الصورة: ${product.image}
+    const msg = `السلام عليكم، عايز أطلب كوتشي من Jimmy Store 👟:
+- الموديل: ${product.name}
+- المقاس: ${selectedSize}
+- السعر: ${product.price} ج.م
+- رابط الصورة: ${product.image}
 
 متاح الشحن؟`;
-    return `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+    return `https://wa.me/${ordersNumber}?text=${encodeURIComponent(msg)}`;
   };
 
   return (
     <div
       onClick={() => onQuickView(product)}
-      className="group relative bg-[#18181c] rounded-3xl overflow-hidden border border-white/5 hover:border-orange-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/10 flex flex-col cursor-pointer"
+      className="group relative bg-[#151519] rounded-3xl overflow-hidden border border-white/5 hover:border-lime-400/30 transition-all duration-300 hover:shadow-2xl hover:shadow-lime-500/10 flex flex-col cursor-pointer"
     >
       {/* Top Badges & Edit Button */}
       <div className="absolute top-3 right-3 left-3 z-20 flex items-center justify-between pointer-events-none">
         {/* Left Side: Badges */}
         <div className="flex flex-col gap-1.5 items-start">
           {product.badge && (
-            <span className="px-2.5 py-1 rounded-full bg-orange-500 text-white text-[11px] font-black shadow-md">
+            <span className="px-2.5 py-1 rounded-full bg-lime-400 text-black text-[11px] font-black shadow-md">
               {product.badge}
             </span>
           )}
@@ -64,7 +67,7 @@ export const ProductCard = ({ product, onQuickView, onEditProduct }) => {
               e.stopPropagation();
               onEditProduct(product);
             }}
-            className="pointer-events-auto p-2 rounded-xl bg-orange-500/80 hover:bg-orange-600 text-white shadow-lg transition-transform hover:scale-110"
+            className="pointer-events-auto p-2 rounded-xl bg-lime-500 hover:bg-lime-400 text-black shadow-lg transition-transform hover:scale-110"
             title="تعديل السعر والصورة"
           >
             <Edit className="w-4 h-4" />
@@ -82,7 +85,7 @@ export const ProductCard = ({ product, onQuickView, onEditProduct }) => {
             e.target.src = "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80";
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#18181c] via-transparent to-transparent opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#151519] via-transparent to-transparent opacity-60" />
 
         {/* Quick View Overlay Button */}
         <button
@@ -92,7 +95,7 @@ export const ProductCard = ({ product, onQuickView, onEditProduct }) => {
           }}
           className="absolute bottom-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-black/70 hover:bg-black text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1.5 backdrop-blur-sm"
         >
-          <Eye className="w-3.5 h-3.5 text-orange-400" />
+          <Eye className="w-3.5 h-3.5 text-lime-400" />
           <span>تفاصيل سريعة</span>
         </button>
       </div>
@@ -102,10 +105,10 @@ export const ProductCard = ({ product, onQuickView, onEditProduct }) => {
         
         {/* Title & Category */}
         <div>
-          <span className="text-[11px] font-bold text-orange-400 uppercase tracking-wider">
+          <span className="text-[11px] font-bold text-lime-400 uppercase tracking-wider">
             {product.category === 'crocs' ? 'كروكس' : product.category === 'women' ? 'حريمي' : product.category === 'kids' ? 'أطفالي' : 'رجالي'}
           </span>
-          <h3 className="text-sm sm:text-base font-bold text-white line-clamp-1 mt-0.5 group-hover:text-orange-400 transition-colors">
+          <h3 className="text-sm sm:text-base font-bold text-white line-clamp-1 mt-0.5 group-hover:text-lime-400 transition-colors">
             {product.name}
           </h3>
           <p className="text-xs text-gray-400 line-clamp-2 mt-1 leading-relaxed">
@@ -118,7 +121,7 @@ export const ProductCard = ({ product, onQuickView, onEditProduct }) => {
           <div className="flex flex-col gap-1.5 pt-1" onClick={(e) => e.stopPropagation()}>
             <div className="text-[11px] font-semibold text-gray-400 flex items-center justify-between">
               <span>المقاس المتاح:</span>
-              <span className="text-orange-400 font-bold">{selectedSize}</span>
+              <span className="text-lime-400 font-bold">{selectedSize}</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {product.sizes.map((sz) => (
@@ -130,7 +133,7 @@ export const ProductCard = ({ product, onQuickView, onEditProduct }) => {
                   }}
                   className={`min-w-[28px] h-7 px-1.5 text-[11px] font-bold rounded-lg transition-all ${
                     selectedSize === sz
-                      ? 'bg-orange-500 text-white shadow-sm'
+                      ? 'bg-lime-400 text-black shadow-sm font-black'
                       : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/5'
                   }`}
                 >
@@ -150,7 +153,7 @@ export const ProductCard = ({ product, onQuickView, onEditProduct }) => {
               <span className="text-xl sm:text-2xl font-black text-white">
                 {product.price}
               </span>
-              <span className="text-xs font-bold text-orange-400">ج.م</span>
+              <span className="text-xs font-bold text-lime-400">ج.م</span>
             </div>
 
             {product.originalPrice && product.originalPrice > product.price && (
@@ -170,29 +173,30 @@ export const ProductCard = ({ product, onQuickView, onEditProduct }) => {
                 addedAnimation
                   ? 'bg-emerald-600 text-white'
                   : product.inStock
-                  ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20 active:scale-95'
+                  ? 'bg-white/10 hover:bg-white/20 text-white border border-white/10 active:scale-95'
                   : 'bg-gray-800 text-gray-400 cursor-not-allowed'
               }`}
             >
               {addedAnimation ? (
                 <>
-                  <Check className="w-4 h-4" />
+                  <Check className="w-4 h-4 text-emerald-400" />
                   <span>تمت الإضافة!</span>
                 </>
               ) : (
                 <>
-                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <ShoppingBag className="w-3.5 h-3.5 text-lime-400" />
                   <span>أضف للسلة</span>
                 </>
               )}
             </button>
 
-            {/* Direct WhatsApp Order */}
+            {/* Direct WhatsApp Order Button (استقبال الأوردر) */}
             <a
-              href={generateWhatsAppUrl({ stopPropagation: () => {} })}
+              href={generateWhatsAppOrderUrl({ stopPropagation: () => {} })}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-2.5 px-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-center"
+              className="w-full py-2.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1 text-center"
+              title="طلب مباشر عبر واتس الأوردرات: 01119946924"
             >
               <Phone className="w-3.5 h-3.5" />
               <span>طلب واتساب</span>

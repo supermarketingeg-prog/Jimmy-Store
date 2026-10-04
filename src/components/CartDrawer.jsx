@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
-import { X, Trash2, ShoppingBag, ArrowLeft, Phone, CheckCircle2, Truck, ShieldCheck } from 'lucide-react';
+import { X, Trash2, ShoppingBag, ArrowLeft, Phone, CheckCircle2, Truck, ShieldCheck, MessageSquare } from 'lucide-react';
 
 const EGYPT_GOVERNORATES = [
   "القاهرة", "الجيزة", "الإسكندرية", "القليوبية", "الشرقية", "الدقهلية",
@@ -23,6 +23,9 @@ export const CartDrawer = ({ isOpen, onClose }) => {
   const [lastCreatedOrder, setLastCreatedOrder] = useState(null);
 
   if (!isOpen) return null;
+
+  const ordersNumber = settings.whatsappOrdersNumber || "201119946924";
+  const inquiryNumber = settings.whatsappInquiryNumber || "201008418338";
 
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const isFreeShipping = subtotal >= (settings.freeShippingThreshold || 2000);
@@ -67,7 +70,8 @@ ${itemsList}
 ----------------------------------------
 برجاء تأكيد تجهيز الأوردر وشحنه. شكراً!`;
 
-    const whatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+    // Direct to Orders WhatsApp: 01119946924
+    const whatsappUrl = `https://wa.me/${ordersNumber}?text=${encodeURIComponent(whatsappMessage)}`;
     
     // Open WhatsApp
     window.open(whatsappUrl, '_blank');
@@ -101,7 +105,7 @@ ${itemsList}
               <span className="text-lg font-black text-white">
                 {step === 'cart' ? 'سلة المشتريات' : step === 'checkout' ? 'بيانات الشحن والتوصيل' : 'تم استلام طلبك'}
               </span>
-              <ShoppingBag className="w-5 h-5 text-orange-400" />
+              <ShoppingBag className="w-5 h-5 text-lime-400" />
             </div>
           </div>
 
@@ -122,7 +126,7 @@ ${itemsList}
                     </div>
                     <button
                       onClick={onClose}
-                      className="mt-4 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all"
+                      className="mt-4 px-6 py-2.5 rounded-xl bg-gradient-to-r from-lime-500 to-emerald-500 text-black text-xs font-black shadow-lg transition-all"
                     >
                       تصفح المنتجات الآن
                     </button>
@@ -148,7 +152,7 @@ ${itemsList}
                           </h4>
                           
                           <div className="flex items-center gap-2 text-[11px] text-gray-400">
-                            <span>المقاس: <strong className="text-orange-400">{item.selectedSize}</strong></span>
+                            <span>المقاس: <strong className="text-lime-400">{item.selectedSize}</strong></span>
                             {item.selectedColor && (
                               <span>اللون: <strong className="text-gray-300">{item.selectedColor}</strong></span>
                             )}
@@ -197,7 +201,7 @@ ${itemsList}
             {step === 'checkout' && (
               <form onSubmit={handleSubmitOrder} className="space-y-4">
                 
-                <div className="bg-orange-500/10 border border-orange-500/20 p-3 rounded-xl text-xs text-orange-400 flex items-center gap-2">
+                <div className="bg-lime-500/10 border border-lime-500/20 p-3 rounded-xl text-xs text-lime-400 flex items-center gap-2">
                   <Truck className="w-4 h-4 shrink-0" />
                   <span>الدفع عند الاستلام مع إمكانية المعاينة والتجربة قبل الدفع</span>
                 </div>
@@ -214,7 +218,7 @@ ${itemsList}
                       placeholder="مثال: أحمد محمد"
                       value={formData.name}
                       onChange={handleInputChange}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-lime-400"
                     />
                   </div>
 
@@ -229,7 +233,7 @@ ${itemsList}
                       placeholder="مثال: 01012345678"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 text-left"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-lime-400 text-left"
                       dir="ltr"
                     />
                   </div>
@@ -242,7 +246,7 @@ ${itemsList}
                       name="governorate"
                       value={formData.governorate}
                       onChange={handleInputChange}
-                      className="w-full bg-[#1e1e24] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                      className="w-full bg-[#1e1e24] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-lime-400"
                     >
                       {EGYPT_GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
@@ -261,7 +265,7 @@ ${itemsList}
                       placeholder="مثال: التجمع الخامس، شارع التسعين، عمارة 15 الدور الثاني"
                       value={formData.address}
                       onChange={handleInputChange}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 resize-none"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-lime-400 resize-none"
                     />
                   </div>
 
@@ -275,7 +279,7 @@ ${itemsList}
                       placeholder="مثال: الاتصال قبل الوصول / الاستلام بعد الساعة 5"
                       value={formData.notes}
                       onChange={handleInputChange}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-orange-500"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-lime-400"
                     />
                   </div>
                 </div>
@@ -283,11 +287,14 @@ ${itemsList}
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-xl shadow-emerald-600/25 flex items-center justify-center gap-2 transition-all active:scale-95"
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm shadow-xl shadow-emerald-600/25 flex items-center justify-center gap-2 transition-all active:scale-95"
                   >
                     <Phone className="w-4 h-4" />
-                    <span>تأكيد وإرسال الطلب عبر واتساب 🚀</span>
+                    <span>تأكيد وإرسال الطلب عبر واتساب الأوردرات 🚀</span>
                   </button>
+                  <p className="text-[10px] text-gray-400 text-center mt-1.5">
+                    يتم الإرسال لرقم استقبال الأوردرات: +201119946924
+                  </p>
                 </div>
               </form>
             )}
@@ -301,10 +308,10 @@ ${itemsList}
                 <div className="space-y-1">
                   <h3 className="text-xl font-black text-white">تم إرسال طلبك بنجاح! 🎉</h3>
                   <p className="text-xs text-gray-300">
-                    رقم الطلب: <strong className="text-orange-400">#{lastCreatedOrder?.id}</strong>
+                    رقم الطلب: <strong className="text-lime-400">#{lastCreatedOrder?.id}</strong>
                   </p>
                   <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed pt-2">
-                    تم تجهيز رسالة الواتساب وفتحها لتأكيد المقاس وميعاد وصول الشحنة مع خدمة العملاء.
+                    تم تجهيز رسالة الواتساب وفتحها لتأكيد المقاس وميعاد وصول الشحنة مع خدمة عملاء Jimmy Store.
                   </p>
                 </div>
 
@@ -314,7 +321,7 @@ ${itemsList}
                       setStep('cart');
                       onClose();
                     }}
-                    className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs transition-all"
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-lime-500 to-emerald-500 text-black font-black text-xs transition-all shadow-md"
                   >
                     العودة للتسوق
                   </button>
@@ -324,7 +331,7 @@ ${itemsList}
 
           </div>
 
-          {/* Footer Price Summary (when in cart step and cart not empty) */}
+          {/* Footer Price Summary */}
           {step === 'cart' && cart.length > 0 && (
             <div className="p-4 sm:p-6 border-t border-white/10 bg-[#121216] space-y-4">
               
@@ -343,22 +350,22 @@ ${itemsList}
 
                 <div className="pt-2 border-t border-white/10 flex justify-between text-sm sm:text-base font-black text-white">
                   <span>الإجمالي:</span>
-                  <span className="text-orange-400 text-lg font-black">{total} ج.م</span>
+                  <span className="text-lime-400 text-lg font-black">{total} ج.م</span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <button
                   onClick={() => setStep('checkout')}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm shadow-xl shadow-orange-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-lime-500 to-emerald-500 text-black font-black text-sm shadow-xl shadow-lime-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
                 >
                   <span>متابعة إتمام الطلب</span>
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="w-4 h-4 text-black" />
                 </button>
 
                 <div className="flex items-center justify-center gap-3 text-[11px] text-gray-400 pt-1">
                   <span className="flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-orange-400" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-lime-400" />
                     <span>دفع عند الاستلام</span>
                   </span>
                   <span>•</span>

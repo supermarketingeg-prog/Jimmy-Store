@@ -1,21 +1,24 @@
 export const initialSettings = {
   storeName: "Jimmy Store",
   tagline: "HIGH COPY • IMPORTED 👟 Men | Women | Kids Sneakers & Crocs 🔥",
-  whatsappNumber: "201000000000", // Changeable by client
-  instagramUrl: "https://instagram.com",
-  facebookUrl: "https://facebook.com",
-  shippingText: "📦 شحن متاح لجميع محافظات مصر والتوصيل خلال 48-72 ساعة",
+  logoUrl: "/logo.png",
+  whatsappOrdersNumber: "201119946924", // رقم استقبال الأوردرات
+  whatsappInquiryNumber: "201008418338", // رقم واتس الاستفسارات والتفاصيل
+  whatsappNumber: "201119946924", // Legacy fallback
+  instagramUrl: "https://www.instagram.com/jimmy.store9?stkn=NWl0cmhrNWpzdTVn",
+  facebookUrl: "https://www.facebook.com/share/1FLNDoikfa/?mibextid=wwXIfr",
+  shippingText: "📦 شحن متاح لجميع محافظات مصر والتوصيل خلال 48-72 ساعة مع معاينة قبل الاستلام",
   shippingFee: 50,
   freeShippingThreshold: 2000,
-  adminPassword: "admin", // Client can change this anytime
-  announcementText: "🔥 خصم خاص 15% على جميع طلبات الكروكس والكوتشيات المستوردة لفترة محدودة!",
+  adminPassword: "admin",
+  announcementText: "🔥 خصم خاص 15% على تشكيلة كوتشيات وكروكس Jimmy Store مع شحن سريع لكل مصر!",
   announcementActive: true,
 };
 
 export const initialBanner = {
-  title: "أحدث تشكيلة كوتشيات مستوردة 2026",
+  title: "تشكيلة كوتشيات وكروكس 2026 الأصلية",
   subtitle: "High Copy أعلى خامات مستوردة بأفضل سعر في مصر 👟 رجالي | حريمي | أطفالي | كروكس",
-  badge: "🔥 العرض الأقوى هذا الأسبوع",
+  badge: "🔥 Jimmy Store - الاختيار الأول في مصر",
   ctaText: "تسوق التشكيلة الآن",
   imageUrl: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=1600&q=80",
   secondaryImageUrl: "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1200&q=80"

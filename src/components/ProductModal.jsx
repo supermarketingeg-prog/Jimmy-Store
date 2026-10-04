@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
-import { X, ShoppingBag, Phone, Check, ShieldCheck, Truck, RotateCcw, Sparkles } from 'lucide-react';
+import { X, ShoppingBag, Phone, Check, ShieldCheck, Truck, RotateCcw, MessageSquare, Sparkles } from 'lucide-react';
 
 export const ProductModal = ({ product, onClose, onEditProduct }) => {
   const { addToCart, settings, isAdminLoggedIn } = useStore();
@@ -10,6 +10,9 @@ export const ProductModal = ({ product, onClose, onEditProduct }) => {
   const [addedAnimation, setAddedAnimation] = useState(false);
 
   if (!product) return null;
+
+  const ordersNumber = settings.whatsappOrdersNumber || "201119946924";
+  const inquiryNumber = settings.whatsappInquiryNumber || "201008418338";
 
   const discountPercent = product.originalPrice && product.originalPrice > product.price
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -25,23 +28,34 @@ export const ProductModal = ({ product, onClose, onEditProduct }) => {
     }, 1200);
   };
 
-  const whatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(
-    `السلام عليكم، حابب أطلب أوردر من Jimmy Store:
-👟 الموديل: ${product.name}
-📏 المقاس: ${selectedSize}
-🎨 اللون: ${selectedColor || 'اللون الأساسي'}
-🔢 الكمية: ${quantity}
-💰 إجمالي السعر: ${product.price * quantity} جنيه
-🖼️ صورة المنتج: ${product.image}
+  // WhatsApp Order URL (رقم استقبال الأوردرات: 01119946924)
+  const whatsappOrderUrl = `https://wa.me/${ordersNumber}?text=${encodeURIComponent(
+    `🔥 *طلب شراء جديد من Jimmy Store:*
+- الموديل: ${product.name}
+- المقاس: ${selectedSize}
+- اللون: ${selectedColor || 'الأساسي'}
+- الكمية: ${quantity}
+- السعر الإجمالي: ${product.price * quantity} ج.م
+- رابط صورة المنتج: ${product.image}
 
-عنوان التوصيل: (برجاء كتابة العنوان والمحافظة)`
+عنوان التوصيل:`
+  )}`;
+
+  // WhatsApp Inquiry URL (رقم الاستفسارات والتفاصيل: 01008418338)
+  const whatsappInquiryUrl = `https://wa.me/${inquiryNumber}?text=${encodeURIComponent(
+    `السلام عليكم، حابب أستفسر عن تفاصيل كوتشي:
+- الموديل: ${product.name}
+- السعر: ${product.price} ج.م
+- رابط الصورة: ${product.image}
+
+هل المقاسات متوفرة؟`
   )}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto animate-fadeIn">
       
       {/* Modal Card */}
-      <div className="relative w-full max-w-3xl bg-[#18181c] rounded-3xl border border-white/10 overflow-hidden shadow-2xl my-8 text-right">
+      <div className="relative w-full max-w-3xl bg-[#16161a] rounded-3xl border border-white/10 overflow-hidden shadow-2xl my-8 text-right">
         
         {/* Close Button */}
         <button
@@ -64,20 +78,20 @@ export const ProductModal = ({ product, onClose, onEditProduct }) => {
               }}
             />
             {product.badge && (
-              <span className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-orange-500 text-white text-xs font-black shadow-lg">
+              <span className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-lime-400 text-black text-xs font-black shadow-lg">
                 {product.badge}
               </span>
             )}
           </div>
 
           {/* Details Column */}
-          <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6">
+          <div className="p-6 sm:p-8 flex flex-col justify-between space-y-5">
             
             <div className="space-y-4">
               
               {/* Category & Title */}
               <div>
-                <span className="text-xs font-bold text-orange-400 uppercase tracking-wider">
+                <span className="text-xs font-bold text-lime-400 uppercase tracking-wider">
                   {product.category === 'crocs' ? 'كروكس' : product.category === 'women' ? 'حريمي' : product.category === 'kids' ? 'أطفالي' : 'كوتشيات رجالي'}
                 </span>
                 <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
@@ -89,7 +103,7 @@ export const ProductModal = ({ product, onClose, onEditProduct }) => {
               <div className="flex items-baseline gap-3">
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-3xl font-black text-white">{product.price}</span>
-                  <span className="text-sm font-bold text-orange-400">ج.م</span>
+                  <span className="text-sm font-bold text-lime-400">ج.م</span>
                 </div>
                 {product.originalPrice && product.originalPrice > product.price && (
                   <div className="flex items-center gap-2">
@@ -111,7 +125,7 @@ export const ProductModal = ({ product, onClose, onEditProduct }) => {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-bold text-white">اختر المقاس:</span>
-                    <span className="text-orange-400 font-bold">المقاس المحدد: {selectedSize}</span>
+                    <span className="text-lime-400 font-bold">المقاس المحدد: {selectedSize}</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {product.sizes.map((size) => (
@@ -120,7 +134,7 @@ export const ProductModal = ({ product, onClose, onEditProduct }) => {
                         onClick={() => setSelectedSize(size)}
                         className={`min-w-[40px] h-10 px-3 text-xs font-bold rounded-xl transition-all ${
                           selectedSize === size
-                            ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20 scale-105'
+                            ? 'bg-lime-400 text-black shadow-lg shadow-lime-500/20 scale-105 font-black'
                             : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
                         }`}
                       >
@@ -142,7 +156,7 @@ export const ProductModal = ({ product, onClose, onEditProduct }) => {
                         onClick={() => setSelectedColor(color)}
                         className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                           selectedColor === color
-                            ? 'bg-orange-500 text-white'
+                            ? 'bg-lime-400 text-black font-black'
                             : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
                         }`}
                       >
@@ -154,7 +168,7 @@ export const ProductModal = ({ product, onClose, onEditProduct }) => {
               )}
 
               {/* Quantity */}
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center justify-between pt-1">
                 <span className="text-xs font-bold text-white">الكمية:</span>
                 <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5">
                   <button
@@ -176,7 +190,7 @@ export const ProductModal = ({ product, onClose, onEditProduct }) => {
             </div>
 
             {/* Actions */}
-            <div className="space-y-3 pt-4 border-t border-white/10">
+            <div className="space-y-3 pt-3 border-t border-white/10">
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {/* Add To Cart */}
@@ -187,47 +201,60 @@ export const ProductModal = ({ product, onClose, onEditProduct }) => {
                     addedAnimation
                       ? 'bg-emerald-600 text-white'
                       : product.inStock
-                      ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20 active:scale-95'
+                      ? 'bg-gradient-to-r from-lime-500 to-emerald-500 text-black font-black shadow-lime-500/20 active:scale-95'
                       : 'bg-gray-800 text-gray-500 cursor-not-allowed'
                   }`}
                 >
                   {addedAnimation ? (
                     <>
-                      <Check className="w-5 h-5" />
+                      <Check className="w-5 h-5 text-white" />
                       <span>تمت الإضافة للسلة!</span>
                     </>
                   ) : (
                     <>
-                      <ShoppingBag className="w-4 h-4" />
+                      <ShoppingBag className="w-4 h-4 text-black" />
                       <span>أضف إلى السلة</span>
                     </>
                   )}
                 </button>
 
-                {/* Direct WhatsApp Order */}
+                {/* Direct WhatsApp Order (استقبال الأوردر) */}
                 <a
-                  href={whatsappUrl}
+                  href={whatsappOrderUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95"
                 >
                   <Phone className="w-4 h-4" />
-                  <span>طلب مباشر واتساب</span>
+                  <span>طلب مباشر (أوردر)</span>
+                </a>
+              </div>
+
+              {/* Inquiries WhatsApp Link (رقم التفاصيل) */}
+              <div className="flex items-center justify-between pt-1">
+                <a
+                  href={whatsappInquiryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-gray-400 hover:text-emerald-400 flex items-center gap-1.5 transition-colors"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>استفسار عن تفاصيل المقاس والخامة (01008418338)</span>
                 </a>
               </div>
 
               {/* Guarantees */}
-              <div className="flex items-center justify-between text-[11px] text-gray-400 pt-2 px-1">
+              <div className="flex items-center justify-between text-[11px] text-gray-400 pt-2 px-1 border-t border-white/5">
                 <div className="flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-orange-400" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-lime-400" />
                   <span>معاينة قبل الدفع</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Truck className="w-3.5 h-3.5 text-orange-400" />
+                  <Truck className="w-3.5 h-3.5 text-lime-400" />
                   <span>توصيل سريع</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <RotateCcw className="w-3.5 h-3.5 text-orange-400" />
+                  <RotateCcw className="w-3.5 h-3.5 text-lime-400" />
                   <span>استبدال المقاس متاح</span>
                 </div>
               </div>
